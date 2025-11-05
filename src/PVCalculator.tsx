@@ -30,17 +30,6 @@ const roundUpTo50 = (value: number): number => {
   return Math.ceil(value / 50) * 50
 }
 
-// Расчёт ставки >15дн на основе ПВ (линейная интерполяция)
-const calculateRateOver15 = (
-  pv: number,
-  rateAtZero: number,
-  rateAtMax: number
-): number => {
-  // Линейная интерполяция: rateAtZero при ПВ=0, rateAtMax при ПВ=1 000 000
-  const ratio = Math.min(1, Math.max(0, pv / 1_000_000))
-  return rateAtZero + ratio * (rateAtMax - rateAtZero)
-}
-
 // Определение статуса сверки по проценту
 const getCheckStatus = (percent: number): 'good' | 'warning' | 'bad' => {
   if (percent >= 90 && percent <= 110) return 'good'
@@ -52,22 +41,25 @@ const getCheckStatus = (percent: number): 'good' | 'warning' | 'bad' => {
 const calculateRow = (
   pv: number,
   rateAtZero: number,
-  rateAtMax: number,
   diffUnder15: number,
   daysInMonth: number,
   months: number,
   carPrice: number
 ): Omit<CalculationRow, 'id' | 'pv'> => {
-  // Ставка >15дн
-  const rateOver15 = calculateRateOver15(pv, rateAtZero, rateAtMax)
+  // 1. Сначала считаем базовую выкупную стоимость БЕЗ ПВ: Ставка × дни × месяцы
+  // Используем ставку при ПВ=0 (rateAtZero) для базовой выкупной стоимости
+  const baseBuyout = Math.round(rateAtZero * daysInMonth * months)
+  
+  // 2. Выкупная стоимость с учётом ПВ = Базовая выкупная стоимость - (ПВ × 1.8)
+  const totalBuyout = Math.max(0, Math.round(baseBuyout - pv * 1.8))
+  
+  // 3. Ставка в сутки вычисляется ОБРАТНО: Выкупная стоимость / дни / месяцы
+  const rateOver15 = totalBuyout / daysInMonth / months
   const rateOver15Rounded = roundUpTo50(rateOver15)
 
   // Ставка <15дн
   const rateUnder15 = rateOver15Rounded + diffUnder15
   const rateUnder15Rounded = roundUpTo50(rateUnder15)
-
-  // Выкупная стоимость = Ставка (округлённая) × Дней в месяце × Срок выкупа
-  const totalBuyout = Math.round(rateOver15Rounded * daysInMonth * months)
 
   // Сверка = (Выкупная стоимость / 2) + ПВ
   const marketCheck = Math.round(totalBuyout / 2 + pv)
@@ -105,7 +97,6 @@ export default function PVCalculator() {
   const [carPrice, setCarPrice] = useState<number>(6500000) // Стоимость автомобиля (ориентир)
   const [deposit, setDeposit] = useState<number>(200000)
   const [rateAtZero, setRateAtZero] = useState<number>(3900)
-  const [rateAtMax, setRateAtMax] = useState<number>(2827)
   const [diffUnder15, setDiffUnder15] = useState<number>(200)
   const [daysInMonth, setDaysInMonth] = useState<number>(30.5)
   const [months, setMonths] = useState<number>(55)
@@ -125,14 +116,13 @@ export default function PVCalculator() {
       ...calculateRow(
         row.pv,
         rateAtZero,
-        rateAtMax,
         diffUnder15,
         daysInMonth,
         months,
         carPrice
       ),
     }))
-  }, [pvRows, rateAtZero, rateAtMax, diffUnder15, daysInMonth, months, carPrice])
+  }, [pvRows, rateAtZero, diffUnder15, daysInMonth, months, carPrice])
 
   // Обновление ПВ
   const updatePV = (id: number, value: number) => {
@@ -252,17 +242,6 @@ export default function PVCalculator() {
                 type="number"
                 value={rateAtZero}
                 onChange={(e) => setRateAtZero(parseFloat(e.target.value) || 0)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Базовая ставка при ПВ=1 000 000 (&gt;15дн) (₽/сут)
-              </label>
-              <input
-                type="number"
-                value={rateAtMax}
-                onChange={(e) => setRateAtMax(parseFloat(e.target.value) || 0)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-yellow-500"
               />
             </div>
