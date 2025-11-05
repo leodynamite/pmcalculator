@@ -66,11 +66,11 @@ const calculateRow = (
   const rateUnder15 = rateOver15Rounded + diffUnder15
   const rateUnder15Rounded = roundUpTo50(rateUnder15)
 
-  // Выкупная стоимость = стоимость авто - (ПВ × 1.8) (не меньше 0)
-  const totalBuyout = Math.max(0, Math.round(carPrice - pv * 1.8))
+  // Выкупная стоимость = Ставка (округлённая) × Дней в месяце × Срок выкупа
+  const totalBuyout = Math.round(rateOver15Rounded * daysInMonth * months)
 
-  // Сверка = выкупная стоимость / 2
-  const marketCheck = Math.round(totalBuyout / 2)
+  // Сверка = (Выкупная стоимость / 2) + ПВ
+  const marketCheck = Math.round(totalBuyout / 2 + pv)
 
   // Сверка с рынком: диапазон от 0.9×стоимость авто до 1.1×стоимость авто (для ориентира)
   const marketCheckMin = Math.round(carPrice * 0.9)
