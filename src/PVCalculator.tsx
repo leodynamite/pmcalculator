@@ -66,8 +66,8 @@ const calculateRow = (
   const rateUnder15 = rateOver15Rounded + diffUnder15
   const rateUnder15Rounded = roundUpTo50(rateUnder15)
 
-  // Выкупная стоимость = ПВ × 1.8 - стоимость авто (не меньше 0)
-  const totalBuyout = Math.max(0, Math.round(pv * 1.8 - carPrice))
+  // Выкупная стоимость = стоимость авто - (ПВ × 1.8) (не меньше 0)
+  const totalBuyout = Math.max(0, Math.round(carPrice - pv * 1.8))
 
   // Сверка = выкупная стоимость / 2
   const marketCheck = Math.round(totalBuyout / 2)
