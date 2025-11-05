@@ -13,8 +13,9 @@ interface CalculationRow extends PVRow {
   rateUnder15: number
   rateUnder15Rounded: number
   totalBuyout: number
-  marketCheckMin: number // 0.9 × стоимость авто
-  marketCheckMax: number // 1.1 × стоимость авто
+  marketCheck: number // выкупная стоимость / 2
+  marketCheckMin: number // 0.9 × стоимость авто (для ориентира)
+  marketCheckMax: number // 1.1 × стоимость авто (для ориентира)
   percentFromCarPrice: number // (сумма выкупа / стоимость авто) * 100
   checkStatus: 'good' | 'warning' | 'bad' // Статус сверки
 }
@@ -65,14 +66,17 @@ const calculateRow = (
   const rateUnder15 = rateOver15Rounded + diffUnder15
   const rateUnder15Rounded = roundUpTo50(rateUnder15)
 
-  // Выкупная стоимость (используем округлённую ставку >15дн)
-  const totalBuyout = Math.round(rateOver15Rounded * daysInMonth * months)
+  // Выкупная стоимость = ПВ × 1.8 - стоимость авто
+  const totalBuyout = Math.round(pv * 1.8 - carPrice)
 
-  // Сверка с рынком: диапазон от 0.9×стоимость авто до 1.1×стоимость авто
+  // Сверка = выкупная стоимость / 2
+  const marketCheck = Math.round(totalBuyout / 2)
+
+  // Сверка с рынком: диапазон от 0.9×стоимость авто до 1.1×стоимость авто (для ориентира)
   const marketCheckMin = Math.round(carPrice * 0.9)
   const marketCheckMax = Math.round(carPrice * 1.1)
 
-  // Процент от стоимости авто
+  // Процент от стоимости авто (для проверки попадает ли выкупная стоимость в диапазон)
   const percentFromCarPrice = carPrice > 0 
     ? (totalBuyout / carPrice) * 100 
     : 0
@@ -86,6 +90,7 @@ const calculateRow = (
     rateUnder15,
     rateUnder15Rounded,
     totalBuyout,
+    marketCheck,
     marketCheckMin,
     marketCheckMax,
     percentFromCarPrice,
@@ -332,7 +337,10 @@ export default function PVCalculator() {
                     Выкупная стоимость (₽)
                   </th>
                   <th className="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">
-                    Сверка с рынком (₽)
+                    Сверка (₽)
+                  </th>
+                  <th className="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">
+                    Ориентир рынка (₽)
                   </th>
                   <th className="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">
                     Процент от стоимости авто
@@ -381,7 +389,12 @@ export default function PVCalculator() {
                         </div>
                       </td>
                       <td className="border border-gray-300 px-4 py-2 bg-white">
-                        <div className="px-2 py-1 text-gray-700 text-sm">
+                        <div className="px-2 py-1 text-gray-700 font-medium" title="Выкупная стоимость / 2">
+                          {formatAmount(row.marketCheck)}
+                        </div>
+                      </td>
+                      <td className="border border-gray-300 px-4 py-2 bg-white">
+                        <div className="px-2 py-1 text-gray-700 text-sm" title="Ориентир: 0.9× - 1.1× от стоимости авто">
                           {formatAmount(row.marketCheckMin)} - {formatAmount(row.marketCheckMax)}
                         </div>
                       </td>
