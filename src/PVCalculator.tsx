@@ -14,8 +14,6 @@ interface CalculationRow extends PVRow {
   rateUnder15Rounded: number
   totalBuyout: number
   marketCheck: number // выкупная стоимость / 2
-  marketCheckMin: number // 0.9 × стоимость авто (для ориентира)
-  marketCheckMax: number // 1.1 × стоимость авто (для ориентира)
   percentFromCarPrice: number // (сумма выкупа / стоимость авто) * 100
   checkStatus: 'good' | 'warning' | 'bad' // Статус сверки
 }
@@ -61,12 +59,8 @@ const calculateRow = (
   const rateUnder15 = rateOver15Rounded + diffUnder15
   const rateUnder15Rounded = roundUpTo50(rateUnder15)
 
-  // Сверка = (Выкупная стоимость / 2) + ПВ
-  const marketCheck = Math.round(totalBuyout / 2 + pv)
-
-  // Сверка с рынком: диапазон от 0.9×стоимость авто до 1.1×стоимость авто (для ориентира)
-  const marketCheckMin = Math.round(carPrice * 0.9)
-  const marketCheckMax = Math.round(carPrice * 1.1)
+  // Сверка = Выкупная стоимость / 2
+  const marketCheck = Math.round(totalBuyout / 2)
 
   // Процент от стоимости авто (для проверки попадает ли выкупная стоимость в диапазон)
   const percentFromCarPrice = carPrice > 0 
@@ -83,8 +77,6 @@ const calculateRow = (
     rateUnder15Rounded,
     totalBuyout,
     marketCheck,
-    marketCheckMin,
-    marketCheckMax,
     percentFromCarPrice,
     checkStatus,
   }
@@ -156,9 +148,9 @@ export default function PVCalculator() {
       const formattedRate = formatAmount(row.rateOver15Rounded)
       const formattedRateUnder15 = formatAmount(row.rateUnder15Rounded)
 
-      text += `ПВ [${formattedPV} ₽] + депозит [${formattedDeposit} ₽] + [15 дней]:\n`
-      text += `ставка [${formattedRate} ₽/сут] ([${formattedRateUnder15} ₽ при оплате менее 15 дней])\n`
-      text += `срок [${months} мес].\n\n`
+      text += `ПВ ${formattedPV} ₽ + депозит ${formattedDeposit} ₽ + 15 дней:\n`
+      text += `ставка ${formattedRate} ₽/сут (${formattedRateUnder15} ₽ при оплате менее 15 дней)\n`
+      text += `срок ${months} мес.\n\n`
     })
 
     return text
@@ -225,7 +217,15 @@ export default function PVCalculator() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Депозит (₽)
+                <span className="flex items-center gap-1">
+                  Депозит (₽)
+                  <span
+                    className="text-gray-400 cursor-help"
+                    title="За ориентир необходимо брать условия по любому авто с аналогичной рыночной стоимостью"
+                  >
+                    ?
+                  </span>
+                </span>
               </label>
               <input
                 type="number"
@@ -236,7 +236,15 @@ export default function PVCalculator() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Базовая ставка при ПВ=0 (&gt;15дн) (₽/сут)
+                <span className="flex items-center gap-1">
+                  Базовая ставка при ПВ=0 (&gt;15дн) (₽/сут)
+                  <span
+                    className="text-gray-400 cursor-help"
+                    title="За ориентир необходимо брать условия по любому авто с аналогичной рыночной стоимостью"
+                  >
+                    ?
+                  </span>
+                </span>
               </label>
               <input
                 type="number"
@@ -270,7 +278,15 @@ export default function PVCalculator() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Срок выкупа (мес)
+                <span className="flex items-center gap-1">
+                  Срок выкупа (мес)
+                  <span
+                    className="text-gray-400 cursor-help"
+                    title="За ориентир необходимо брать условия по любому авто с аналогичной рыночной стоимостью"
+                  >
+                    ?
+                  </span>
+                </span>
               </label>
               <input
                 type="number"
@@ -316,10 +332,15 @@ export default function PVCalculator() {
                     Выкупная стоимость (₽)
                   </th>
                   <th className="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">
-                    Сверка (₽)
-                  </th>
-                  <th className="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">
-                    Ориентир рынка (₽)
+                    <div className="flex items-center gap-1">
+                      Сверка (₽)
+                      <span
+                        className="text-gray-400 cursor-help"
+                        title="Значение должно быть примерно равно рыночной стоимости или немного выше неё"
+                      >
+                        ?
+                      </span>
+                    </div>
                   </th>
                   <th className="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">
                     Процент от стоимости авто
@@ -368,13 +389,8 @@ export default function PVCalculator() {
                         </div>
                       </td>
                       <td className="border border-gray-300 px-4 py-2 bg-white">
-                        <div className="px-2 py-1 text-gray-700 font-medium" title="Выкупная стоимость / 2">
+                        <div className="px-2 py-1 text-gray-700 font-medium">
                           {formatAmount(row.marketCheck)}
-                        </div>
-                      </td>
-                      <td className="border border-gray-300 px-4 py-2 bg-white">
-                        <div className="px-2 py-1 text-gray-700 text-sm" title="Ориентир: 0.9× - 1.1× от стоимости авто">
-                          {formatAmount(row.marketCheckMin)} - {formatAmount(row.marketCheckMax)}
                         </div>
                       </td>
                       <td className="border border-gray-300 px-4 py-2 bg-white">
