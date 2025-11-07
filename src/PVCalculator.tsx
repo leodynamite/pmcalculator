@@ -1,6 +1,21 @@
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
+// Простой компонент всплывающей подсказки на Tailwind (без внешних зависимостей)
+function Tooltip({ message }: { message: string }) {
+  return (
+    <span className="relative inline-block group align-middle select-none">
+      <span className="inline-flex items-center justify-center w-4 h-4 text-xs font-semibold rounded-full bg-gray-200 text-gray-600 cursor-default">?</span>
+      <span
+        className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 w-64 -translate-x-1/2 whitespace-normal rounded-md bg-gray-900 px-3 py-2 text-xs leading-snug text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100"
+        role="tooltip"
+      >
+        {message}
+      </span>
+    </span>
+  )
+}
+
 // Типы данных
 interface PVRow {
   id: number
@@ -219,12 +234,7 @@ export default function PVCalculator() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 <span className="flex items-center gap-1">
                   Депозит (₽)
-                  <span
-                    className="text-gray-400 cursor-help"
-                    title="За ориентир необходимо брать условия по любому авто с аналогичной рыночной стоимостью"
-                  >
-                    ?
-                  </span>
+                  <Tooltip message="За ориентир необходимо брать условия по любому авто с аналогичной рыночной стоимостью" />
                 </span>
               </label>
               <input
@@ -238,12 +248,7 @@ export default function PVCalculator() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 <span className="flex items-center gap-1">
                   Базовая ставка при ПВ=0 (&gt;15дн) (₽/сут)
-                  <span
-                    className="text-gray-400 cursor-help"
-                    title="За ориентир необходимо брать условия по любому авто с аналогичной рыночной стоимостью"
-                  >
-                    ?
-                  </span>
+                  <Tooltip message="За ориентир необходимо брать условия по любому авто с аналогичной рыночной стоимостью" />
                 </span>
               </label>
               <input
@@ -280,12 +285,7 @@ export default function PVCalculator() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 <span className="flex items-center gap-1">
                   Срок выкупа (мес)
-                  <span
-                    className="text-gray-400 cursor-help"
-                    title="За ориентир необходимо брать условия по любому авто с аналогичной рыночной стоимостью"
-                  >
-                    ?
-                  </span>
+                  <Tooltip message="За ориентир необходимо брать условия по любому авто с аналогичной рыночной стоимостью" />
                 </span>
               </label>
               <input
@@ -334,12 +334,7 @@ export default function PVCalculator() {
                   <th className="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">
                     <div className="flex items-center gap-1">
                       Сверка (₽)
-                      <span
-                        className="text-gray-400 cursor-help"
-                        title="Значение должно быть примерно равно рыночной стоимости или немного выше неё"
-                      >
-                        ?
-                      </span>
+                      <Tooltip message="Значение должно быть примерно равно рыночной стоимости или немного выше неё" />
                     </div>
                   </th>
                   <th className="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">
